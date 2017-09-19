@@ -1,7 +1,8 @@
 
 use ggez::*;
 use ggez::graphics::DrawMode;
-use ggez::graphics::Point;
+
+use iso_coords::IsoCoord;
 
 #[derive(Debug, Copy, Clone)]
 struct Cell {
@@ -30,17 +31,11 @@ pub struct Board {
     cells: Vec<Cell>,
 }
 
-fn to_iso(pt: Point) -> Point {
-    let mut p: Point = Point::new(0.0, 0.0);
-    p.x = pt.x - pt.y;
-    p.y = (pt.x + pt.y) / 2.0;
-    p
-}
-
 impl Board {
     pub fn new(width: u32, height: u32, tile_size: f32) -> Self {
         let mut tiles: Vec<Cell> = Vec::new();
 
+        // Manually construct a simple square board
         for i in 0..height {
             for j in 0..width {
                 let mut new_cell = Cell::new();
@@ -68,19 +63,21 @@ impl Board {
 
                 // Move coordinate anchor point from middle of rectangle to
                 // upper left corner.
-                let x = 400.0 + j as f32 * self.tile_size;
+                let x = 300.0 + j as f32 * self.tile_size;
                 let y = -100.0 + i as f32 * self.tile_size;
 
-                if self.cells.get((i + self.width * j) as usize).unwrap().get_tile_type() == 0 {
+                if &self.cells[(i + self.width * j) as usize].get_tile_type() == &0 {
                     graphics::set_color(ctx, graphics::Color::new(0.2, 0.99, 0.56, 1.0))?;
                 } else {
                     graphics::set_color(ctx, graphics::Color::new(0.73, 0.88, 0.06, 1.0))?;
                 }
 
-                let rect = vec![to_iso(Point::new(x, y)),
-                                to_iso(Point::new(x + self.tile_size, y)),
-                                to_iso(Point::new(x + self.tile_size, y + self.tile_size)),
-                                to_iso(Point::new(x, y + self.tile_size))]
+                // Create a rectangle and transform the coordinates into iso
+                let rect = vec![IsoCoord::from_cartesian(x, y).as_point(),
+                                IsoCoord::from_cartesian(x + self.tile_size, y).as_point(),
+                                IsoCoord::from_cartesian(x + self.tile_size, y + self.tile_size)
+                                    .as_point(),
+                                IsoCoord::from_cartesian(x, y + self.tile_size).as_point()]
                     .into_boxed_slice();
 
                 graphics::polygon(ctx, DrawMode::Line, &rect)?;

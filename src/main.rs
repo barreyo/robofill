@@ -2,69 +2,81 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
-extern crate cgmath;
 extern crate ggez;
 extern crate specs;
+#[macro_use] extern crate specs_derive;
 
 mod board;
+mod iso_coords;
+mod components;
+mod resources;
 
-use ggez::*;
-
-use specs::World;
+use ggez::{conf, GameResult, Context, graphics, timer};
+use ggez::event::*;
+use specs::{World, Dispatcher, DispatcherBuilder};
 
 use std::time::Duration;
 
 use board::Board;
 
-struct MainState {
+struct MainState<'a, 'b> {
     world: World,
-    board: Board,
+    dispatcher: Dispatcher<'a, 'b>,
 }
 
-impl MainState {
-    fn new(_ctx: &mut Context) -> GameResult<MainState> {
+impl<'a, 'b> MainState<'a, 'b> {
+    fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
+
+        // ECS world type
+        let mut world = World::new();
+        let mut dispatcher_builder = DispatcherBuilder::new();
+
+        dispatcher_builder = resources::delta_time::init_world(&mut world, dispatcher_builder);
+        dispatcher_builder = components::input::init_world(&mut world, dispatcher_builder);
+
+        let dispatcher = dispatcher_builder.build();
+
+        // Player entity
+        world.create_entity()
+            .with(components::input::Controllable)
+            .build();
+
         let s = MainState {
-            world: World::new(),
-            board: Board::new(10, 10, 50.0),
+            world: world,
+            dispatcher: dispatcher,
         };
         Ok(s)
     }
 }
 
-impl event::EventHandler for MainState {
-    fn update(&mut self, _ctx: &mut Context, _dt: Duration) -> GameResult<()> {
+impl<'a, 'b> EventHandler for MainState<'a, 'b> {
+    fn update(&mut self, _ctx: &mut Context, dt: Duration) -> GameResult<()> {
+
+        {
+            let mut delta = self.world.write_resource::<resources::delta_time::DeltaTime>();
+            *delta = resources::delta_time::DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
+        }
+
+        self.dispatcher.dispatch(&mut self.world.res);
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx);
-
-        let win_rect = graphics::get_screen_coordinates(ctx);
-        self.board.render(ctx);
-
-        // let win_w = win_rect.w;
-        // let win_h = -win_rect.h;
-        // let cell_size = 0.9 * win_h / self.grid_size as f32;
-        // let starting_x = win_w / 2.0 - cell_size * self.grid_size as f32 / 2.0;
-        // let starting_y = 50.0;
-        //
-        // graphics::set_color(ctx, graphics::Color::new(0.73, 0.88, 0.06, 1.0))?;
-        //
-        // for row in 0..self.grid_size {
-        // for sq in 0..self.grid_size {
-        // graphics::rectangle(ctx,
-        // DrawMode::Fill,
-        // graphics::Rect::new(row as f32 * cell_size + starting_x,
-        // sq as f32 * cell_size + starting_y,
-        // cell_size - 3.0,
-        // cell_size - 3.0))?;
-        // }
-        // }
-        //
         graphics::present(ctx);
+        timer::sleep_until_next_frame(ctx, 60);
         Ok(())
     }
 
+    fn key_down_event(&mut self, keycode: Keycode, _keymod: Mod, _repeat: bool) {
+        let mut keyboard_input = self.world.write_resource::<components::input::KeyboardInput>();
+        keyboard_input.0.insert(keycode, true);
+    }
+
+    fn key_up_event(&mut self, keycode: Keycode, _keymod: Mod, _repeat: bool) {
+        let mut keyboard_input = self.world.write_resource::<components::input::KeyboardInput>();
+        keyboard_input.0.insert(keycode, false);
+    }
     //    fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
     // graphics::set_screen_coordinates(ctx, 0.0, width as f32, 0.0, height as f32).unwrap();
     // }
@@ -73,11 +85,13 @@ impl event::EventHandler for MainState {
 pub fn main() {
     let mut c = conf::Conf::new();
 
-    c.window_width = 1000;
+    c.window_title = "robofill".to_string();
+    c.window_width = 800;
     c.window_height = 800;
     c.vsync = true;
 
-    let ctx = &mut Context::load_from_conf("super_simple", "ggez", c).unwrap();
+    let ctx = &mut Context::load_from_conf("robofill", "patar", c).unwrap();
     let state = &mut MainState::new(ctx).unwrap();
-    event::run(ctx, state).unwrap();
+
+    run(ctx, state).unwrap();
 }

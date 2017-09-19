@@ -11,3 +11,4 @@ cgmath = "0.15"
 clippy = {version = "*", optional = true}
 ggez = "0.3"
 specs = "0.9"
+specs-derive = "0.1"
