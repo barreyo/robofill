@@ -9,6 +9,11 @@ default = []
 [dependencies]
 cgmath = "0.15"
 clippy = {version = "*", optional = true}
-ggez = "0.3"
+piston2d-graphics = "0.21.0"
+piston2d-sprite = "0.37"
 specs = "0.9"
 specs-derive = "0.1"
+
+[dependencies.ggez]
+version = "0.3"
+features = ["cargo-resource-root"]

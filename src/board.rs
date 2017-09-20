@@ -2,7 +2,7 @@
 use ggez::*;
 use ggez::graphics::DrawMode;
 
-use iso_coords::IsoCoord;
+use meta::iso_coords::IsoCoord;
 
 #[derive(Debug, Copy, Clone)]
 struct Cell {
@@ -66,7 +66,7 @@ impl Board {
                 let x = 300.0 + j as f32 * self.tile_size;
                 let y = -100.0 + i as f32 * self.tile_size;
 
-                if &self.cells[(i + self.width * j) as usize].get_tile_type() == &0 {
+                if self.cells[(i + self.width * j) as usize].get_tile_type() == 0 {
                     graphics::set_color(ctx, graphics::Color::new(0.2, 0.99, 0.56, 1.0))?;
                 } else {
                     graphics::set_color(ctx, graphics::Color::new(0.73, 0.88, 0.06, 1.0))?;
