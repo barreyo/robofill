@@ -1,6 +1,7 @@
 
 use ggez::*;
 use ggez::graphics::DrawMode;
+use cgmath::Vector2;
 
 use meta::iso_coords::IsoCoord;
 
@@ -28,11 +29,12 @@ pub struct Board {
     width: u32,
     height: u32,
     tile_size: f32,
+    start_pos: Vector2<f32>,
     cells: Vec<Cell>,
 }
 
 impl Board {
-    pub fn new(width: u32, height: u32, tile_size: f32) -> Self {
+    pub fn new(width: u32, height: u32, tile_size: f32, pos: Vector2<f32>) -> Self {
         let mut tiles: Vec<Cell> = Vec::new();
 
         // Manually construct a simple square board
@@ -53,8 +55,17 @@ impl Board {
             width: width,
             height: height,
             tile_size: tile_size,
+            start_pos: pos,
             cells: tiles,
         }
+    }
+
+    pub fn get_cell_coords(&self, xi: f32, yi: f32) -> Vector2<f32> {
+        let x = (xi / (800.0 / self.width as f32)).floor();
+        let y = (yi / (800.0 / self.height as f32)).floor();
+        let iso = IsoCoord::from_cartesian(self.start_pos.x + x * self.tile_size,
+                                           self.start_pos.y + y * self.tile_size);
+        Vector2::new(iso.x, iso.y)
     }
 
     pub fn render(&self, ctx: &mut Context) -> GameResult<()> {
@@ -63,8 +74,8 @@ impl Board {
 
                 // Move coordinate anchor point from middle of rectangle to
                 // upper left corner.
-                let x = 300.0 + j as f32 * self.tile_size;
-                let y = -100.0 + i as f32 * self.tile_size;
+                let x = self.start_pos.x + j as f32 * self.tile_size;
+                let y = self.start_pos.y + i as f32 * self.tile_size;
 
                 if self.cells[(i + self.width * j) as usize].get_tile_type() == 0 {
                     graphics::set_color(ctx, graphics::Color::new(0.2, 0.99, 0.56, 1.0))?;

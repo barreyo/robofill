@@ -28,6 +28,8 @@ struct MainState<'a, 'b> {
 impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
 
+        let screen_rect = ggez::graphics::get_screen_coordinates(ctx);
+
         // ECS world type
         let mut world = World::new();
         let mut dispatcher_builder = DispatcherBuilder::new();
@@ -40,17 +42,14 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = dispatcher_builder.build();
 
-        // Baord entity
-        world.create_entity()
-            .with(components::positioning::Position(Vector2::new(0.0, 0.0)))
-            .with(components::graphics::RenderableSpriteGrid(board::Board::new(12, 12, 30.0)))
-            .build();
+        world.add_resource(components::graphics::GameBoard(board::Board::new(12, 12, 30.0, Vector2::new(screen_rect.w / 2.0, 0.0))));
 
         // Player entity
         world.create_entity()
             .with(components::positioning::Position(Vector2::new(0.0, 0.0)))
             .with(components::positioning::Velocity(Vector2::new(0.0, 0.0)))
             .with(components::input::Controllable)
+            .with(components::positioning::GridSnapping)
             .with(components::input::InputMapping::default())
             .with(components::graphics::RenderableSprite(Image::new(ctx, "/duck.png")?))
             .build();
@@ -81,12 +80,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let entities = self.world.entities();
         let positions = self.world.read::<components::positioning::Position>();
         let sprites = self.world.read::<components::graphics::RenderableSprite>();
-        let grids = self.world.read::<components::graphics::RenderableSpriteGrid>();
+        let grid = self.world.write_resource::<components::graphics::GameBoard>();
 
-        for (_entity, _position, grid) in (&*entities, &positions, &grids).join() {
-            grid.0.render(ctx);
-        }
+        grid.0.render(ctx)?;
 
+        ggez::graphics::set_color(ctx, ggez::graphics::Color::new(1.0, 1.0, 1.0, 1.0))?;
         for (_entity, position, sprite) in (&*entities, &positions, &sprites).join() {
             draw(ctx, &sprite.0, Point::new(position.0.x, position.0.y), 0.0)?;
         }
@@ -124,6 +122,7 @@ pub fn main() {
     c.window_title = "robofill".to_string();
     c.window_width = 800;
     c.window_height = 800;
+    c.resizable = true;
     c.vsync = true;
 
     let ctx = &mut Context::load_from_conf("robofill", "patar", c).unwrap();
