@@ -44,14 +44,16 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         world.add_resource(components::graphics::GameBoard(board::Board::new(12, 12, 30.0, Vector2::new(screen_rect.w / 2.0, 0.0))));
 
+        // TODO: Set starting position to starting tile in Board
+
         // Player entity
         world.create_entity()
             .with(components::positioning::Position(Vector2::new(0.0, 0.0)))
-            .with(components::positioning::Velocity(Vector2::new(0.0, 0.0)))
+            .with(components::positioning::Velocity(Vector2::new(10.0, 10.0)))
+            .with(components::positioning::Animating(false))
             .with(components::input::Controllable)
-            .with(components::positioning::GridSnapping)
             .with(components::input::InputMapping::default())
-            .with(components::graphics::RenderableSprite(Image::new(ctx, "/duck.png")?))
+            .with(components::graphics::RenderableSprite(Image::new(ctx, "/sprites/duck.png")?))
             .build();
 
         Ok(MainState {

@@ -14,14 +14,25 @@ pub struct Position(pub Vector2<f32>);
 #[component(VecStorage)]
 pub struct Velocity(pub Vector2<f32>);
 
+#[derive(Component, Debug)]
+#[component(VecStorage)]
+pub struct Direction(pub Vector2<f32>);
+
+#[derive(Component, Debug)]
+#[component(VecStorage)]
+pub struct Animating(pub bool);
+
 pub struct Move;
 
 impl<'a> System<'a> for Move {
     type SystemData = (Fetch<'a, delta_time::DeltaTime>,
+     Fetch<'a, GameBoard>,
      ReadStorage<'a, Velocity>,
+     ReadStorage<'a, Direction>,
+     ReadStorage<'a, Animating>,
      WriteStorage<'a, Position>);
 
-    fn run(&mut self, (delta, vel, mut pos): Self::SystemData) {
+    fn run(&mut self, (delta, board, vel, dir, mut ani, mut pos): Self::SystemData) {
         use specs::Join;
 
         let delta = delta.0;
@@ -36,39 +47,14 @@ impl<'a> System<'a> for Move {
 #[component(HashMapStorage)]
 pub struct Controllable;
 
-#[derive(Component, Debug)]
-#[component(HashMapStorage)]
-pub struct GridSnapping;
-
-pub struct Snapping;
-
-impl<'a> System<'a> for Snapping {
-    type SystemData = (WriteStorage<'a, Position>,
-     ReadStorage<'a, GridSnapping>,
-     Fetch<'a, GameBoard>);
-
-    fn run(&mut self, (mut pos, _snapping, grid): Self::SystemData) {
-        use specs::Join;
-
-        let grid = &grid.0;
-
-        for (pos, _s) in (&mut pos, &_snapping).join() {
-            let grid_pos = grid.get_cell_coords(pos.0.x, pos.0.y);
-            pos.0.x = grid_pos.x;
-            pos.0.y = grid_pos.y;
-            println!("Snapping to X: {}, Y: {}", pos.0.x, pos.0.y);
-        }
-    }
-}
-
 pub fn init_world<'a, 'b>(world: &mut World,
                           dispatcher_builder: DispatcherBuilder<'a, 'b>)
                           -> DispatcherBuilder<'a, 'b> {
     world.register::<Position>();
     world.register::<Velocity>();
-    world.register::<GridSnapping>();
+    world.register::<Animating>();
+    world.register::<Direction>();
 
     // Movement happen before we snap into grid cells
     dispatcher_builder.add(Move, "Move", &[])
-        .add(Snapping, "Snapping", &["Move"])
 }

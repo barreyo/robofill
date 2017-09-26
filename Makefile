@@ -1,7 +1,9 @@
 
 PROJECT_NAME 	:= "robofill"
+PROJECT_VERSION  = $(shell awk '{ if (NR==3) print $$3}' Cargo.toml)
 GIT_BRANCH     	 = $(shell git rev-parse --abbrev-ref HEAD)
 GIT_VERSION    	 = $(shell git describe --tags --always)
+FULL_VERSION     = "$(PROJECT_VERSION)-$(GIT_BRANCH)-$(GIT_VERSION)"
 
 # Text formatting
 BOLD  			:= $(tput bold)
@@ -12,6 +14,7 @@ NORMAL			:= $(tput sgr0)
 # TODO: Do all building in a Docker container with the correct dependencies
 #     	already installed.
 run: ## Build and run the project
+	@echo "$(BOLD)Running $(FULL_VERSION)$(NORMAL)"
 	@cargo run
 
 test: ## Run all unit tests

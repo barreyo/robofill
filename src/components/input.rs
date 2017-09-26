@@ -5,7 +5,7 @@ use ggez::event::Keycode;
 use specs::{System, HashMapStorage, VecStorage, Fetch, ReadStorage, WriteStorage, World,
             DispatcherBuilder};
 
-use components::positioning::Velocity;
+use components::positioning::Direction;
 
 /// Holds all keypresses
 pub struct KeyboardInput(pub HashMap<Keycode, bool>);
@@ -60,16 +60,16 @@ impl<'a> System<'a> for Control {
     type SystemData = (Fetch<'a, KeyboardInput>,
      ReadStorage<'a, InputMapping>,
      ReadStorage<'a, Controllable>,
-     WriteStorage<'a, Velocity>);
+     WriteStorage<'a, Direction>);
 
     fn run(&mut self,
-           (keyboard_input, input_mapping, controllable, mut velocity): Self::SystemData) {
+           (keyboard_input, input_mapping, controllable, mut direction): Self::SystemData) {
         use specs::Join;
 
         let keyboard_input = &*keyboard_input;
 
-        let mut xvel = 0.0;
-        let mut yvel = 0.0;
+        let mut ydir = 0.0;
+        let mut xdir = 0.0;
 
         for mapping in input_mapping.join() {
 
@@ -77,31 +77,31 @@ impl<'a> System<'a> for Control {
                 match *action {
                     InputAction::MoveUp => {
                         if keyboard_input.is_pressed(code) {
-                            yvel -= 100.0;
+                            ydir = -1.0;
                         }
                     }
                     InputAction::MoveDown => {
                         if keyboard_input.is_pressed(code) {
-                            yvel += 100.0;
+                            ydir = 1.0;
                         }
                     }
                     InputAction::MoveRight => {
                         if keyboard_input.is_pressed(code) {
-                            xvel += 100.0;
+                            xdir = 1.0;
                         }
                     }
                     InputAction::MoveLeft => {
                         if keyboard_input.is_pressed(code) {
-                            xvel -= 100.0;
+                            xdir = -1.0;
                         }
                     }
                 }
             }
         }
 
-        for (_c, vel) in (&controllable, &mut velocity).join() {
-            vel.0.x = xvel;
-            vel.0.y = yvel;
+        for (_c, dir) in (&controllable, &mut direction).join() {
+            dir.0.x = xdir;
+            dir.0.y = ydir;
         }
     }
 }
