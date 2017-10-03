@@ -1,5 +1,5 @@
 [package]
-name = "robo-fill"
+name = "robofill"
 version = "0.1.0"
 authors = ["Johan Backman <johback@student.chalmers.se>"]
 

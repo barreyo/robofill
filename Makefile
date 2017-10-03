@@ -15,7 +15,7 @@ NORMAL			:= $(tput sgr0)
 #     	already installed.
 run: ## Build and run the project
 	@echo "$(BOLD)Running $(FULL_VERSION)$(NORMAL)"
-	@cargo run
+	@cargo run --release
 
 test: ## Run all unit tests
 	@echo "$(BOLD)Running tests...$(NORMAL)"

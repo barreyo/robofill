@@ -43,6 +43,9 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = dispatcher_builder.build();
 
+        let font = ggez::graphics::Font::new(ctx, "/fonts/Inter-UI-Regular.ttf", 12)?;
+        world.add_resource(components::graphics::RenderableFont(font));
+
         let game_board = core::grid::Board::new(12, 12, 30.0, Vector2::new(screen_rect.w / 2.0, 0.0));
         let starting_pos = game_board.get_tile_center_world_coordinate([0, 0]);
 
@@ -52,7 +55,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.create_entity()
             .with(components::positioning::Position(starting_pos))
             .with(components::positioning::GridPosition([0, 0]))
-            .with(components::positioning::Velocity(Vector2::new(5.0, 5.0)))
+            .with(components::positioning::Velocity(Vector2::new(8.0, 8.0)))
             .with(components::positioning::TargetPosition(None))
             .with(components::positioning::Animating(false))
             .with(components::positioning::AnimationTime(0.0))
@@ -89,6 +92,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let positions = self.world.read::<components::positioning::Position>();
         let sprites = self.world.read::<components::graphics::RenderableSprite>();
         let grid = self.world.write_resource::<components::graphics::GameBoard>();
+        let font = self.world.write_resource::<components::graphics::RenderableFont>();
 
         grid.0.render(ctx)?;
 
@@ -98,10 +102,18 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             draw(ctx, &sprite.0, iso_coords.as_point(), 0.0)?;
         }
 
+        let fps = ggez::timer::get_fps(ctx);
+        let avg_delta = ggez::timer::get_average_delta(ctx);
+        let avg_delta_u64 = avg_delta.as_secs() * 1000 + avg_delta.subsec_nanos() as u64 / 1_000_000;
+        let fps_string = format!("{:.1} fps ({} ms)", fps, avg_delta_u64);
+        let fps_text = ggez::graphics::Text::new(ctx, fps_string.as_str(), &font.0).unwrap();
+        let dest = ggez::graphics::Point::new((fps_text.width() / 2) as f32 + 15.0, (fps_text.height() / 2) as f32 + 15.0);
+        ggez::graphics::draw(ctx, &fps_text, dest, 0.0)?;
+
         ggez::graphics::present(ctx);
 
         // Keep for prototyping, do actual signaling to the OS for real product
-        timer::sleep_until_next_frame(ctx, 60);
+        timer::sleep(Duration::from_secs(0));
         Ok(())
     }
 

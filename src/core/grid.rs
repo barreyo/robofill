@@ -8,6 +8,7 @@ use core::iso_coords::IsoCoord;
 #[derive(Debug, Copy, Clone)]
 pub struct Tile {
     sprite: u8,
+    free_movement: bool,
 }
 
 pub type GridCoordinate = [u32; 2];
@@ -22,11 +23,22 @@ pub enum GridDirection {
 
 impl Tile {
     fn new() -> Tile {
-        Tile { sprite: 0 }
+        Tile {
+            sprite: 0,
+            free_movement: false,
+        }
     }
 
     fn set_sprite(&mut self, sprite: u8) {
         self.sprite = sprite;
+    }
+
+    fn set_free_move(&mut self, b: bool) {
+        self.free_movement = b;
+    }
+
+    fn is_free_move(&self) -> bool {
+        self.free_movement
     }
 
     fn get_tile_type(&self) -> u8 {
@@ -54,9 +66,11 @@ impl Board {
                 let mut new_tile = Tile::new();
                 if i % (height - 1) == 0 {
                     new_tile.set_sprite(1);
+                    new_tile.set_free_move(true);
                 }
                 if j == 0 || j == (width - 1) {
                     new_tile.set_sprite(1);
+                    new_tile.set_free_move(true);
                 }
                 tiles.push(new_tile);
             }
@@ -90,9 +104,9 @@ impl Board {
                      self.position.y + (cell[1] as f32 + 0.5) * self.tile_size)
     }
 
-    pub fn get_tile(&self, coord: GridCoordinate) -> Tile {
+    pub fn get_tile(&self, coord: GridCoordinate) -> &Tile {
         let i = coord[0] + self.width * coord[1];
-        self.tiles[i as usize]
+        &self.tiles[i as usize]
     }
 
     pub fn render(&self, ctx: &mut Context) -> GameResult<()> {
@@ -118,7 +132,7 @@ impl Board {
                                 IsoCoord::from_cartesian(x, y + self.tile_size).as_point()]
                     .into_boxed_slice();
 
-                graphics::polygon(ctx, DrawMode::Line, &rect)?;
+                graphics::polygon(ctx, DrawMode::Fill, &rect)?;
             }
         }
         Ok(())

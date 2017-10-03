@@ -1,6 +1,6 @@
 
 use specs::{VecStorage, World, DispatcherBuilder};
-use ggez::graphics::Image;
+use ggez::graphics::{Image, Font};
 
 use core::grid::Board;
 
@@ -9,6 +9,8 @@ use core::grid::Board;
 pub struct RenderableSprite(pub Image);
 
 pub struct GameBoard(pub Board);
+
+pub struct RenderableFont(pub Font);
 
 pub fn init_world<'a, 'b>(world: &mut World,
                           dispatcher_builder: DispatcherBuilder<'a, 'b>)
