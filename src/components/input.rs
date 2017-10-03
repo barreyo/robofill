@@ -5,7 +5,9 @@ use ggez::event::Keycode;
 use specs::{System, HashMapStorage, VecStorage, Fetch, ReadStorage, WriteStorage, World,
             DispatcherBuilder};
 
-use components::positioning::Direction;
+use components::graphics::GameBoard;
+use core::grid;
+use components::positioning::{Direction, Animating, Position, TargetPosition};
 
 /// Holds all keypresses
 pub struct KeyboardInput(pub HashMap<Keycode, bool>);
@@ -58,18 +60,27 @@ pub struct Control;
 
 impl<'a> System<'a> for Control {
     type SystemData = (Fetch<'a, KeyboardInput>,
+     Fetch<'a, GameBoard>,
      ReadStorage<'a, InputMapping>,
      ReadStorage<'a, Controllable>,
+     ReadStorage<'a, Position>,
+     WriteStorage<'a, Animating>,
+     WriteStorage<'a, TargetPosition>,
      WriteStorage<'a, Direction>);
 
     fn run(&mut self,
-           (keyboard_input, input_mapping, controllable, mut direction): Self::SystemData) {
+           (keyboard_input, board, input_mapping, controllable, position, mut animating, mut target, mut direction): Self::SystemData) {
         use specs::Join;
 
         let keyboard_input = &*keyboard_input;
+        let board = &board.0;
 
-        let mut ydir = 0.0;
-        let mut xdir = 0.0;
+        // TODO: Direction should probably be exclusive in that sense that,
+        //       we can only go up, only down, only left or only right.
+        //
+        //       Diagonal movement should be invalid.
+        let mut dir = grid::GridDirection::DirectionNorth;
+        let mut btn_update = false;
 
         for mapping in input_mapping.join() {
 
@@ -77,31 +88,41 @@ impl<'a> System<'a> for Control {
                 match *action {
                     InputAction::MoveUp => {
                         if keyboard_input.is_pressed(code) {
-                            ydir = -1.0;
+                            dir = grid::GridDirection::DirectionNorth;
+                            btn_update = true;
                         }
                     }
                     InputAction::MoveDown => {
                         if keyboard_input.is_pressed(code) {
-                            ydir = 1.0;
+                            dir = grid::GridDirection::DirectionSouth;
+                            btn_update = true;
                         }
                     }
                     InputAction::MoveRight => {
                         if keyboard_input.is_pressed(code) {
-                            xdir = 1.0;
+                            dir = grid::GridDirection::DirectionEast;
+                            btn_update = true;
                         }
                     }
                     InputAction::MoveLeft => {
                         if keyboard_input.is_pressed(code) {
-                            xdir = -1.0;
+                            dir = grid::GridDirection::DirectionWest;
+                            btn_update = true;
                         }
                     }
                 }
             }
         }
 
-        for (_c, dir) in (&controllable, &mut direction).join() {
-            dir.0.x = xdir;
-            dir.0.y = ydir;
+        for (_c, pos, is_anim, d, tar) in (&controllable, &position, &mut animating, &mut direction, &mut target).join() {
+            if !is_anim.0 && btn_update {
+                d.0 = dir;
+
+                let cur_tile = board.get_tile_coordinates(pos.0);
+                let next_tile = board.get_neighbour(cur_tile, dir);
+                tar.0 = Some(board.get_tile_center_world_coordinate(next_tile));
+                is_anim.0 = true;
+            }
         }
     }
 }
@@ -110,6 +131,8 @@ pub fn init_world<'a, 'b>(world: &mut World,
                           dispatcher_builder: DispatcherBuilder<'a, 'b>)
                           -> DispatcherBuilder<'a, 'b> {
     world.register::<Controllable>();
+
+    // Create the resource so we can add input to the map.
     world.add_resource(KeyboardInput::new());
     world.register::<InputMapping>();
 

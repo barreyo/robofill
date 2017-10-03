@@ -10,4 +10,3 @@ pub fn init_world<'a, 'b>(world: &mut World,
     world.add_resource(ScreenParams(Rect::new(0.0, 0.0, 0.0, 0.0)));
     dispatcher_builder
 }
-

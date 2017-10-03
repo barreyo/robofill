@@ -2,7 +2,7 @@
 use specs::{VecStorage, World, DispatcherBuilder};
 use ggez::graphics::Image;
 
-use board::Board;
+use core::grid::Board;
 
 #[derive(Component, Debug)]
 #[component(VecStorage)]

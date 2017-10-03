@@ -7,8 +7,7 @@ extern crate ggez;
 extern crate specs;
 #[macro_use] extern crate specs_derive;
 
-mod board;
-mod meta;
+mod core;
 mod components;
 mod resources;
 
@@ -19,6 +18,8 @@ use ggez::event::*;
 use specs::{World, Dispatcher, DispatcherBuilder};
 
 use std::time::Duration;
+
+use core::iso_coords::IsoCoord;
 
 struct MainState<'a, 'b> {
     world: World,
@@ -42,15 +43,20 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = dispatcher_builder.build();
 
-        world.add_resource(components::graphics::GameBoard(board::Board::new(12, 12, 30.0, Vector2::new(screen_rect.w / 2.0, 0.0))));
+        let game_board = core::grid::Board::new(12, 12, 30.0, Vector2::new(screen_rect.w / 2.0, 0.0));
+        let starting_pos = game_board.get_tile_center_world_coordinate([0, 0]);
 
-        // TODO: Set starting position to starting tile in Board
+        world.add_resource(components::graphics::GameBoard(game_board));
 
         // Player entity
         world.create_entity()
-            .with(components::positioning::Position(Vector2::new(0.0, 0.0)))
-            .with(components::positioning::Velocity(Vector2::new(10.0, 10.0)))
+            .with(components::positioning::Position(starting_pos))
+            .with(components::positioning::GridPosition([0, 0]))
+            .with(components::positioning::Velocity(Vector2::new(5.0, 5.0)))
+            .with(components::positioning::TargetPosition(None))
             .with(components::positioning::Animating(false))
+            .with(components::positioning::AnimationTime(0.0))
+            .with(components::positioning::Direction(core::grid::GridDirection::DirectionSouth))
             .with(components::input::Controllable)
             .with(components::input::InputMapping::default())
             .with(components::graphics::RenderableSprite(Image::new(ctx, "/sprites/duck.png")?))
@@ -88,7 +94,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         ggez::graphics::set_color(ctx, ggez::graphics::Color::new(1.0, 1.0, 1.0, 1.0))?;
         for (_entity, position, sprite) in (&*entities, &positions, &sprites).join() {
-            draw(ctx, &sprite.0, Point::new(position.0.x, position.0.y), 0.0)?;
+            let iso_coords = IsoCoord::from_cartesian(position.0.x, position.0.y);
+            draw(ctx, &sprite.0, iso_coords.as_point(), 0.0)?;
         }
 
         ggez::graphics::present(ctx);
