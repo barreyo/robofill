@@ -98,12 +98,18 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         ggez::graphics::set_color(ctx, ggez::graphics::Color::new(1.0, 1.0, 1.0, 1.0))?;
         for (_entity, position, sprite) in (&*entities, &positions, &sprites).join() {
-            let iso_coords = IsoCoord::from_cartesian(position.0.x, position.0.y);
+            // Move the anchor to the center of the sprite
+            // TODO: Move to sprite struct
+            let new_pos = Point::new(position.0.x - sprite.0.width() as f32 * 0.5, position.0.y - sprite.0.height() as f32 * 0.5);
+            let iso_coords = IsoCoord::from_cartesian(new_pos.x, new_pos.y);
             draw(ctx, &sprite.0, iso_coords.as_point(), 0.0)?;
         }
 
+        // TODO: Remove this bullshit, only for debugging
         let fps = ggez::timer::get_fps(ctx);
         let avg_delta = ggez::timer::get_average_delta(ctx);
+
+        // Put this mathz into a helper function, WHY is this not in std lib???
         let avg_delta_u64 = avg_delta.as_secs() * 1000 + avg_delta.subsec_nanos() as u64 / 1_000_000;
         let fps_string = format!("{:.1} fps ({} ms)", fps, avg_delta_u64);
         let fps_text = ggez::graphics::Text::new(ctx, fps_string.as_str(), &font.0).unwrap();
