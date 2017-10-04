@@ -120,8 +120,14 @@ impl<'a> System<'a> for Control {
 
                 let cur_tile = board.get_tile_coordinates(pos.0);
                 let next_tile = board.get_neighbour(cur_tile, dir);
-                tar.0 = Some(board.get_tile_center_world_coordinate(next_tile));
-                is_anim.0 = true;
+
+                match next_tile {
+                    Some(c) => {
+                        tar.0 = Some(board.get_tile_center_world_coordinate(c));
+                        is_anim.0 = true ;
+                    },
+                    None => is_anim.0 = false,
+                }
             }
         }
     }

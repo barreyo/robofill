@@ -85,14 +85,41 @@ impl Board {
         }
     }
 
-    pub fn get_neighbour(&self, coord: GridCoordinate, direction: GridDirection) -> GridCoordinate {
+    pub fn get_neighbour(&self,
+                         coord: GridCoordinate,
+                         direction: GridDirection)
+                         -> Option<GridCoordinate> {
+
+        // TODO: Move out bound checks into collision detection.
         match direction {
-            GridDirection::DirectionNorth => [coord[0], coord[1] - 1],
-            GridDirection::DirectionSouth => [coord[0], coord[1] + 1],
-            GridDirection::DirectionEast => [coord[0] + 1, coord[1]],
-            GridDirection::DirectionWest => [coord[0] - 1, coord[1]],
+            GridDirection::DirectionNorth => {
+                if coord[1] == 0 {
+                    return None;
+                }
+                Some([coord[0], coord[1] - 1])
+            }
+            GridDirection::DirectionSouth => {
+                if coord[1] == self.height {
+                    return None;
+                }
+                Some([coord[0], coord[1] + 1])
+            }
+            GridDirection::DirectionEast => {
+                if coord[0] == self.height {
+                    return None;
+                }
+                Some([coord[0] + 1, coord[1]])
+            }
+            GridDirection::DirectionWest => {
+                if coord[0] == 0 {
+                    return None;
+                }
+                Some([coord[0] - 1, coord[1]])
+            }
         }
     }
+
+    fn check_bounds(&self) {}
 
     pub fn get_tile_coordinates(&self, point: Vector2<f32>) -> GridCoordinate {
         [((point.x - self.position.x) / self.tile_size).floor() as u32,

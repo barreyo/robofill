@@ -37,6 +37,7 @@ pub struct AnimationTime(pub f32);
 
 pub struct Move;
 
+// TODO: Type very complicated
 impl<'a> System<'a> for Move {
     type SystemData = (Fetch<'a, delta_time::DeltaTime>,
      Fetch<'a, GameBoard>,
@@ -66,9 +67,6 @@ impl<'a> System<'a> for Move {
                     ani_time.0 = 0.0;
                     gp.0 = board.get_tile_coordinates(pos.0);
                     tp.0 = None;
-
-                    println!("Grid pos: {:?}", gp.0);
-                    println!("Pos: {:?}", pos.0);
                 }
             }
         }
