@@ -24,6 +24,7 @@ pub enum GridDirection {
 impl Tile {
     fn new() -> Tile {
         Tile {
+            // TODO: Use some kind of Sprite UUID and something managing assets.
             sprite: 0,
             free_movement: false,
         }
@@ -159,7 +160,7 @@ impl Board {
                                 IsoCoord::from_cartesian(x, y + self.tile_size).as_point()]
                     .into_boxed_slice();
 
-                graphics::polygon(ctx, DrawMode::Fill, &rect)?;
+                graphics::polygon(ctx, DrawMode::Line, &rect)?;
             }
         }
         Ok(())

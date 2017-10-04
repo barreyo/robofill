@@ -90,6 +90,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         let entities = self.world.entities();
         let positions = self.world.read::<components::positioning::Position>();
+        let grid_positions = self.world.read::<components::positioning::GridPosition>();
         let sprites = self.world.read::<components::graphics::RenderableSprite>();
         let grid = self.world.write_resource::<components::graphics::GameBoard>();
         let font = self.world.write_resource::<components::graphics::RenderableFont>();
@@ -97,12 +98,17 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         grid.0.render(ctx)?;
 
         ggez::graphics::set_color(ctx, ggez::graphics::Color::new(1.0, 1.0, 1.0, 1.0))?;
-        for (_entity, position, sprite) in (&*entities, &positions, &sprites).join() {
+        for (_entity, position, gp, sprite) in (&*entities, &positions, &grid_positions, &sprites).join() {
             // Move the anchor to the center of the sprite
             // TODO: Move to sprite struct
-            let new_pos = Point::new(position.0.x - sprite.0.width() as f32 * 0.5, position.0.y - sprite.0.height() as f32 * 0.5);
+            let new_pos = Point::new(position.0.x - sprite.0.width() as f32, position.0.y - sprite.0.height() as f32);
             let iso_coords = IsoCoord::from_cartesian(new_pos.x, new_pos.y);
             draw(ctx, &sprite.0, iso_coords.as_point(), 0.0)?;
+
+            let pos_string = format!("Grid: [{}, {}]", gp.0[0], gp.0[1]);
+            let pos_text = ggez::graphics::Text::new(ctx, pos_string.as_str(), &font.0).unwrap();
+            let dest = ggez::graphics::Point::new((pos_text.width() / 2) as f32 + 15.0, (pos_text.height() / 2) as f32 + 36.0);
+            ggez::graphics::draw(ctx, &pos_text, dest, 0.0)?;
         }
 
         // TODO: Remove this bullshit, only for debugging
