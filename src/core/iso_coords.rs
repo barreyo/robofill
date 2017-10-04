@@ -9,11 +9,13 @@ pub struct IsoCoord {
 
 impl IsoCoord {
     /// Construct from coordinates in Isometric space.
+    #[allow(dead_code)]
     pub fn new(x: f32, y: f32) -> Self {
         IsoCoord { x: x, y: y }
     }
 
     /// Construct a point in Isometric space from cartesian coordinates.
+    #[allow(dead_code)]
     pub fn from_point(p: Point) -> Self {
         let iso_coords = to_iso(p);
 

@@ -91,6 +91,7 @@ impl Board {
                          -> Option<GridCoordinate> {
 
         // TODO: Move out bound checks into collision detection.
+        //       Pretty ungly shit going on here
         match direction {
             GridDirection::DirectionNorth => {
                 if coord[1] == 0 {
@@ -119,8 +120,6 @@ impl Board {
         }
     }
 
-    fn check_bounds(&self) {}
-
     pub fn get_tile_coordinates(&self, point: Vector2<f32>) -> GridCoordinate {
         [((point.x - self.position.x) / self.tile_size).floor() as u32,
          ((point.y - self.position.y) / self.tile_size).floor() as u32]
@@ -131,6 +130,7 @@ impl Board {
                      self.position.y + (cell[1] as f32 + 0.5) * self.tile_size)
     }
 
+    #[allow(dead_code)]
     pub fn get_tile(&self, coord: GridCoordinate) -> &Tile {
         let i = coord[0] + self.width * coord[1];
         &self.tiles[i as usize]

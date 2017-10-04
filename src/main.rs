@@ -110,7 +110,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let avg_delta = ggez::timer::get_average_delta(ctx);
 
         // Put this mathz into a helper function, WHY is this not in std lib???
-        let avg_delta_u64 = avg_delta.as_secs() * 1000 + avg_delta.subsec_nanos() as u64 / 1_000_000;
+        let avg_delta_u64 = avg_delta.as_secs() * 1000 + u64::from(avg_delta.subsec_nanos()) / 1_000_000;
         let fps_string = format!("{:.1} fps ({} ms)", fps, avg_delta_u64);
         let fps_text = ggez::graphics::Text::new(ctx, fps_string.as_str(), &font.0).unwrap();
         let dest = ggez::graphics::Point::new((fps_text.width() / 2) as f32 + 15.0, (fps_text.height() / 2) as f32 + 15.0);
